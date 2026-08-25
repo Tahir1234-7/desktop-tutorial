@@ -1,0 +1,682 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>T's Junction Driving School Ltd | Learn in a MINI Countryman</title>
+    <!-- Google Fonts: Righteous (Heading) & Outfit (Body) -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@500;700;800;900&family=Righteous&family=Syne:wght@800;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Leaflet CSS for Leicester Background Map -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+
+    <style>
+        :root {
+            --bg-color: #f4f5f7;
+            --accent-red: #d90429;
+            --burgundy: #600000;
+            --accent-blue: #0056b3;
+            --card-bg: rgba(255, 255, 255, 0.96);
+            --text-main: #000000;
+            --text-sub: #111111;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        html, body {
+            min-height: 100%;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            font-family: 'Outfit', sans-serif;
+            overflow-x: hidden;
+            font-weight: 700;
+        }
+
+        /* Fixed Fullscreen Map Container */
+        #map-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            z-index: 0;
+            filter: grayscale(30%) contrast(110%) brightness(90%);
+            pointer-events: none;
+        }
+
+        /* Fixed 3D Canvas Background */
+        #webgl-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            z-index: 1;
+            pointer-events: none;
+        }
+
+        /* Vibrant Floating Driving Decor Signs Dotted Across Layout */
+        .decor-sign {
+            position: absolute;
+            z-index: 2;
+            pointer-events: none;
+            user-select: none;
+            filter: drop-shadow(0 10px 18px rgba(0,0,0,0.3));
+            animation: floatSign 6s ease-in-out infinite alternate;
+        }
+
+        @keyframes floatSign {
+            0% { transform: translateY(0) rotate(0deg); }
+            100% { transform: translateY(-20px) rotate(8deg); }
+        }
+
+        /* Scrollable Content Layers */
+        .content-layer {
+            position: relative;
+            z-index: 3;
+            pointer-events: none;
+        }
+
+        section {
+            min-height: 85vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+            position: relative;
+        }
+
+        .showcase-space {
+            min-height: 100vh;
+            margin-bottom: 0;
+        }
+
+        .interactive-element {
+            pointer-events: auto;
+        }
+
+        /* Custom Main Header Styling */
+        .brand-title {
+            font-family: 'Righteous', cursive;
+            font-size: 4.5rem;
+            line-height: 1.05;
+            margin-bottom: 1.2rem;
+            text-transform: uppercase;
+            color: var(--accent-red);
+            text-shadow: 
+                3px 3px 0 #000,
+                -3px -3px 0 #000,
+                3px -3px 0 #000,
+                -3px 3px 0 #000,
+                0 8px 25px rgba(0, 0, 0, 0.7);
+            letter-spacing: 1px;
+        }
+
+        h2 {
+            font-family: 'Syne', sans-serif;
+            font-size: 3.2rem;
+            font-weight: 900;
+            line-height: 1.1;
+            margin-bottom: 0.8rem;
+            text-transform: uppercase;
+            color: #000000;
+            letter-spacing: -0.01em;
+            text-shadow: 0 2px 10px rgba(255, 255, 255, 0.9), 0 0 2px #fff;
+        }
+
+        /* High contrast text bubbles */
+        p {
+            font-size: 1.3rem;
+            color: #000000;
+            max-width: 620px;
+            line-height: 1.5;
+            font-weight: 800;
+            background: rgba(255, 255, 255, 0.95);
+            padding: 12px 22px;
+            border-radius: 16px;
+            border: 2px solid #000000;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.25);
+        }
+
+        .badge {
+            background: #000000;
+            border: 2px solid #ffffff;
+            color: #ffffff;
+            padding: 0.6rem 1.6rem;
+            border-radius: 50px;
+            font-size: 0.95rem;
+            font-weight: 900;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            margin-bottom: 1rem;
+            display: inline-block;
+            box-shadow: 0 6px 16px rgba(0,0,0,0.3);
+        }
+
+        .badge i {
+            margin-right: 8px;
+            color: #ffb703;
+        }
+
+        /* Dashboard & Contact Cards */
+        .dashboard-card {
+            background: var(--card-bg);
+            border: 3px solid #000000;
+            padding: 2.5rem 3rem;
+            border-radius: 28px;
+            margin-top: 1rem;
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.3);
+            position: relative;
+            overflow: hidden;
+            width: 100%;
+            max-width: 550px;
+        }
+
+        .dashboard-card::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0;
+            height: 6px;
+            background: linear-gradient(90deg, #0077b6, #d90429);
+        }
+
+        .price {
+            font-family: 'Righteous', cursive;
+            font-size: 5.2rem;
+            font-weight: 900;
+            color: var(--accent-red);
+            margin: 0.2rem 0;
+            text-shadow: 2px 2px 0 #000;
+        }
+
+        /* Integrated Contact Section */
+        .contact-integration {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            margin-top: 1.8rem;
+            width: 100%;
+        }
+
+        .contact-btn-link {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 1rem 1.4rem;
+            border-radius: 14px;
+            text-decoration: none;
+            font-weight: 800;
+            font-size: 1.05rem;
+            transition: all 0.3s ease;
+            border: 2px solid #000;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        }
+
+        .contact-btn-link:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.25);
+        }
+
+        .contact-btn-whatsapp {
+            background-color: #128C7E;
+            color: #ffffff;
+        }
+
+        .contact-btn-call {
+            background-color: var(--accent-blue);
+            color: #ffffff;
+        }
+
+        .contact-label-text {
+            display: flex;
+            flex-direction: column;
+            text-align: left;
+        }
+
+        .contact-label-text span {
+            font-size: 0.78rem;
+            opacity: 0.95;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .btn-main {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            background: var(--accent-red);
+            color: #fff;
+            padding: 1.2rem 2.5rem;
+            border-radius: 50px;
+            text-decoration: none;
+            font-weight: 900;
+            font-size: 1.1rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-top: 1.2rem;
+            transition: all 0.3s ease;
+            width: 100%;
+            border: 2px solid #000;
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
+        }
+
+        .btn-main:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 12px 25px rgba(0, 0, 0, 0.4);
+            background: #b00020;
+        }
+
+        /* Speedometer HUD Style Indicator */
+        .hud-status {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            z-index: 10;
+            background: #000000;
+            border: 2px solid #ffffff;
+            padding: 12px 22px;
+            border-radius: 30px;
+            font-weight: 800;
+            font-size: 0.9rem;
+            color: #ffffff;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.4);
+        }
+
+        .hud-progress {
+            width: 70px;
+            height: 8px;
+            background: #333333;
+            border-radius: 4px;
+            overflow: hidden;
+            border: 1px solid #555;
+        }
+
+        .hud-bar {
+            height: 100%;
+            width: 0%;
+            background: #ffb703;
+            transition: width 0.1s;
+        }
+
+        .scroll-indicator {
+            position: absolute;
+            bottom: 1.5rem;
+            font-size: 0.9rem;
+            color: #000000;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            animation: bounce 2s infinite;
+            background: #ffffff;
+            border: 2px solid #000000;
+            padding: 8px 18px;
+            border-radius: 20px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+        }
+
+        @keyframes bounce {
+            0%, 20%, 50%, 80%, 100% { transform: translateY(0); }
+            40% { transform: translateY(-8px); }
+            60% { transform: translateY(-4px); }
+        }
+    </style>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <!-- Leaflet JS for Map initialization -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+</head>
+<body>
+
+    <!-- Leicester Interactive Map Background -->
+    <div id="map-container"></div>
+
+    <div id="webgl-container"></div>
+
+    <!-- Floating Background Driving Decor Icons -->
+    <i class="fa-solid fa-steering-wheel decor-sign" style="top: 12%; left: 7%; font-size: 5.5rem; color: #0077b6;"></i>
+    <i class="fa-solid fa-traffic-light decor-sign" style="top: 28%; right: 6%; font-size: 6rem; color: #d90429; animation-delay: -2s;"></i>
+    <i class="fa-solid fa-triangle-exclamation decor-sign" style="top: 48%; left: 5%; font-size: 5.2rem; color: #ffb703; animation-delay: -4s;"></i>
+    <i class="fa-solid fa-circle-stop decor-sign" style="top: 65%; right: 8%; font-size: 5.8rem; color: #d90429; animation-delay: -1s;"></i>
+    <i class="fa-solid fa-route decor-sign" style="top: 82%; left: 8%; font-size: 5rem; color: #3a0ca3; animation-delay: -3s;"></i>
+    <i class="fa-solid fa-shield-halved decor-sign" style="top: 93%; right: 10%; font-size: 4.8rem; color: #2a9d8f; animation-delay: -5s;"></i>
+
+    <!-- Speedometer HUD -->
+    <div class="hud-status">
+        <i class="fa-solid fa-car-side" style="color: #ffb703;"></i> MINI ASSEMBLY: <span id="assembly-pct">0%</span>
+        <div class="hud-progress"><div class="hud-bar" id="hud-bar"></div></div>
+    </div>
+
+    <div class="content-layer">
+        <!-- Section 1: Intro -->
+        <section>
+            <div class="badge"><i class="fa-solid fa-trophy"></i> Leicester's Premier Driving School</div>
+            <h1 class="brand-title">T's Junction<br>Driving School</h1>
+            <p>Master the roads with precision, speed, and complete confidence.</p>
+            <div class="scroll-indicator"><i class="fa-solid fa-angles-down"></i> Scroll down to assemble the car</div>
+        </section>
+
+        <!-- Section 2: The Car -->
+        <section>
+            <div class="badge"><i class="fa-solid fa-car"></i> Training Fleet</div>
+            <h2>2017 MINI Countryman</h2>
+            <p>Learn inside a sleek, modern, and reliable compact SUV engineered for responsive handling and rapid confidence building.</p>
+        </section>
+
+        <!-- Section 3: Engineering -->
+        <section>
+            <div class="badge"><i class="fa-solid fa-sliders"></i> Technical Precision</div>
+            <h2>Built For Success</h2>
+            <p>We go beyond basic tests—giving you total real-world control, junction dominance, and complete road awareness.</p>
+        </section>
+
+        <!-- Section 4: Coverage Areas -->
+        <section>
+            <div class="badge"><i class="fa-solid fa-map-location-dot"></i> Local Routes</div>
+            <h2>Leicester Coverage</h2>
+            <p>Extensive tuition tailored across <strong>Oadby</strong>, <strong>Evington</strong>, and surrounding areas. Conquer roundabouts with ease.</p>
+        </section>
+
+        <!-- Section 5: Pricing & CTA -->
+        <section>
+            <div class="dashboard-card interactive-element">
+                <div class="badge" style="background: #000; border-color: #0077b6;"><i class="fa-solid fa-bolt"></i> Ready to Drive</div>
+                <h2 style="font-size: 2.2rem; margin: 0; color: #000;">Standard Tuition Rate</h2>
+                <div class="price">£75</div>
+                <p style="color: #000; font-weight: 800; margin-bottom: 0.5rem; background: none; border: none; box-shadow: none;">For 2 Hours of Intensive Driving Instruction</p>
+                
+                <a href="tel:07581707843" class="btn-main"><i class="fa-solid fa-key"></i> Book Your Lesson Now</a>
+
+                <!-- Integrated Contact Links -->
+                <div class="contact-integration">
+                    <a href="https://wa.me/447581707843" target="_blank" class="contact-btn-link contact-btn-whatsapp">
+                        <div class="contact-label-text">
+                            <span>Instant Messaging</span>
+                            Click here for WhatsApp
+                        </div>
+                        <i class="fa-brands fa-whatsapp fa-xl"></i>
+                    </a>
+                    
+                    <a href="tel:07581707843" class="contact-btn-link contact-btn-call">
+                        <div class="contact-label-text">
+                            <span>Direct Line</span>
+                            Call Us Now: 07581 707843
+                        </div>
+                        <i class="fa-solid fa-phone fa-lg"></i>
+                    </a>
+                </div>
+            </div>
+        </section>
+
+        <!-- Final Unobstructed Car Showcase Section -->
+        <section class="showcase-space">
+            <div class="badge" style="background: #000; border-color: #25D366;">
+                <i class="fa-solid fa-circle-check" style="color: #25D366;"></i> Assembly Complete
+            </div>
+        </section>
+    </div>
+
+    <script>
+        // --- 0. LEICESTER BACKGROUND MAP SETUP ---
+        const map = L.map('map-container', {
+            zoomControl: false,
+            scrollWheelZoom: false,
+            doubleClickZoom: false,
+            touchZoom: false,
+            dragging: false
+        }).setView([52.6075, -1.0825], 13);
+
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            maxZoom: 19,
+            attribution: '© OpenStreetMap'
+        }).addTo(map);
+
+        // --- 1. THREE.JS SCENE SETUP ---
+        const container = document.getElementById('webgl-container');
+        const scene = new THREE.Scene();
+        scene.fog = new THREE.FogExp2(0xf4f5f7, 0.03);
+
+        const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 100);
+        camera.position.set(0, 1.2, 8.5);
+
+        const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+        container.appendChild(renderer.domElement);
+
+        // --- 2. LIGHTING SETUP ---
+        const ambientLight = new THREE.AmbientLight(0xffffff, 1.6);
+        scene.add(ambientLight);
+
+        const accentLight1 = new THREE.PointLight(0x0077b6, 3.5, 18);
+        accentLight1.position.set(-5, 4, 3);
+        scene.add(accentLight1);
+
+        const accentLight2 = new THREE.PointLight(0xd90429, 3.5, 18);
+        accentLight2.position.set(5, 3, 3);
+        scene.add(accentLight2);
+
+        const topLight = new THREE.DirectionalLight(0xffffff, 2);
+        topLight.position.set(0, 10, 6);
+        scene.add(topLight);
+
+        // Floor Grid
+        const gridHelper = new THREE.GridHelper(30, 30, 0x000000, 0x888888);
+        gridHelper.position.y = -1.6;
+        scene.add(gridHelper);
+
+        // --- 3. DETAILED MINI COUNTRYMAN MODEL SETUP ---
+        const carGroup = new THREE.Group();
+        scene.add(carGroup);
+
+        // Detailed Materials
+        const bodyMat = new THREE.MeshStandardMaterial({ color: 0x5a6268, metalness: 0.85, roughness: 0.2 });
+        const blackTrimMat = new THREE.MeshStandardMaterial({ color: 0x1a1a1a, metalness: 0.5, roughness: 0.5 });
+        const roofMat = new THREE.MeshStandardMaterial({ color: 0xffffff, metalness: 0.2, roughness: 0.3 });
+        const glassMat = new THREE.MeshStandardMaterial({ color: 0x0f172a, metalness: 0.95, roughness: 0.05, transparent: true, opacity: 0.85 });
+        const wheelMat = new THREE.MeshStandardMaterial({ color: 0x111111, roughness: 0.8 });
+        const rimMat = new THREE.MeshStandardMaterial({ color: 0xcccccc, metalness: 0.9, roughness: 0.1 });
+        const chromeMat = new THREE.MeshStandardMaterial({ color: 0xffffff, metalness: 0.95, roughness: 0.05 });
+        const lightMat = new THREE.MeshStandardMaterial({ color: 0xffffff, emissive: 0xffffff, emissiveIntensity: 0.9 });
+        const tailLightMat = new THREE.MeshStandardMaterial({ color: 0xd90429, emissive: 0xd90429, emissiveIntensity: 0.7 });
+
+        const parts = [];
+
+        function registerPart(mesh, origPos, startPos, delayOffset = 0) {
+            carGroup.add(mesh);
+            parts.push({ mesh, orig: origPos, start: startPos, delay: delayOffset });
+        }
+
+        // A. Lower Chassis Frame
+        const chassisGeo = new THREE.BoxGeometry(3.6, 0.2, 1.7);
+        const chassis = new THREE.Mesh(chassisGeo, blackTrimMat);
+        chassis.position.set(0, -1.1, 0);
+        registerPart(chassis, new THREE.Vector3(0, -1.1, 0), new THREE.Vector3(0, -8, 0), 0);
+
+        // B. Main Body Shell Lower Section
+        const mainBodyGeo = new THREE.BoxGeometry(3.8, 0.65, 1.8);
+        const mainBody = new THREE.Mesh(mainBodyGeo, bodyMat);
+        mainBody.position.set(0, -0.6, 0);
+        registerPart(mainBody, new THREE.Vector3(0, -0.6, 0), new THREE.Vector3(0, 6, 0), 0.1);
+
+        // C. Front Bumper / Grille Assembly
+        const frontBumperGeo = new THREE.BoxGeometry(0.3, 0.5, 1.75);
+        const frontBumper = new THREE.Mesh(frontBumperGeo, blackTrimMat);
+        frontBumper.position.set(1.95, -0.6, 0);
+        
+        const grilleGeo = new THREE.BoxGeometry(0.05, 0.25, 1.0);
+        const grille = new THREE.Mesh(grilleGeo, chromeMat);
+        grille.position.set(0.16, 0.05, 0);
+        frontBumper.add(grille);
+
+        registerPart(frontBumper, new THREE.Vector3(1.95, -0.6, 0), new THREE.Vector3(7, -0.6, 0), 0.2);
+
+        // D. Rear Bumper Assembly
+        const rearBumperGeo = new THREE.BoxGeometry(0.3, 0.5, 1.75);
+        const rearBumper = new THREE.Mesh(rearBumperGeo, blackTrimMat);
+        rearBumper.position.set(-1.95, -0.6, 0);
+        registerPart(rearBumper, new THREE.Vector3(-1.95, -0.6, 0), new THREE.Vector3(-7, -0.6, 0), 0.2);
+
+        // E. Cabin Glass Roof Architecture
+        const cabinGeo = new THREE.BoxGeometry(2.2, 0.7, 1.55);
+        const cabin = new THREE.Mesh(cabinGeo, glassMat);
+        cabin.position.set(-0.1, 0.1, 0);
+        registerPart(cabin, new THREE.Vector3(-0.1, 0.1, 0), new THREE.Vector3(-0.1, 8, 0), 0.3);
+
+        // F. Contrast Roof Top Shell (Signature MINI Feature)
+        const roofGeo = new THREE.BoxGeometry(2.3, 0.1, 1.6);
+        const roof = new THREE.Mesh(roofGeo, roofMat);
+        roof.position.set(-0.1, 0.5, 0);
+
+        // Roof Rails
+        [-0.7, 0.7].forEach(z => {
+            const railGeo = new THREE.BoxGeometry(2.0, 0.05, 0.05);
+            const rail = new THREE.Mesh(railGeo, blackTrimMat);
+            rail.position.set(0, 0.08, z);
+            roof.add(rail);
+        });
+
+        registerPart(roof, new THREE.Vector3(-0.1, 0.5, 0), new THREE.Vector3(-0.1, 10, 0), 0.4);
+
+        // G. Detailed Wheels with Spokes & Rims
+        const wheelPositions = [
+            { x: 1.15, z: 0.92 },
+            { x: 1.15, z: -0.92 },
+            { x: -1.15, z: 0.92 },
+            { x: -1.15, z: -0.92 }
+        ];
+
+        wheelPositions.forEach((pos, idx) => {
+            const wGroup = new THREE.Group();
+            
+            // Tire
+            const tireGeo = new THREE.CylinderGeometry(0.46, 0.46, 0.28, 24);
+            tireGeo.rotateX(Math.PI / 2);
+            const tire = new THREE.Mesh(tireGeo, wheelMat);
+            wGroup.add(tire);
+
+            // Rim Hub
+            const rimGeo = new THREE.CylinderGeometry(0.28, 0.28, 0.3, 16);
+            rimGeo.rotateX(Math.PI / 2);
+            const rim = new THREE.Mesh(rimGeo, rimMat);
+            wGroup.add(rim);
+
+            // Spokes
+            for (let i = 0; i < 5; i++) {
+                const spokeGeo = new THREE.BoxGeometry(0.06, 0.42, 0.31);
+                const spoke = new THREE.Mesh(spokeGeo, chromeMat);
+                spoke.rotation.z = (i * Math.PI * 2) / 5;
+                wGroup.add(spoke);
+            }
+
+            wGroup.position.set(pos.x, -0.95, pos.z);
+            registerPart(wGroup, new THREE.Vector3(pos.x, -0.95, pos.z), new THREE.Vector3(pos.x * 4, -4, pos.z * 5), 0.15 * idx);
+        });
+
+        // H. Front Headlights with Chrome Surrounds
+        [-0.6, 0.6].forEach(z => {
+            const hGroup = new THREE.Group();
+            const lightGeo = new THREE.CylinderGeometry(0.16, 0.16, 0.1, 16);
+            lightGeo.rotateZ(Math.PI / 2);
+            const headlight = new THREE.Mesh(lightGeo, lightMat);
+            
+            const surroundGeo = new THREE.CylinderGeometry(0.2, 0.2, 0.08, 16);
+            surroundGeo.rotateZ(Math.PI / 2);
+            const surround = new THREE.Mesh(surroundGeo, chromeMat);
+
+            hGroup.add(surround);
+            hGroup.add(headlight);
+            hGroup.position.set(1.9, -0.25, z);
+            
+            registerPart(hGroup, new THREE.Vector3(1.9, -0.25, z), new THREE.Vector3(6, 2, z * 3), 0.5);
+        });
+
+        // I. Rear Tail Lights
+        [-0.65, 0.65].forEach(z => {
+            const lightGeo = new THREE.BoxGeometry(0.08, 0.25, 0.2);
+            const tailLight = new THREE.Mesh(lightGeo, tailLightMat);
+            tailLight.position.set(-1.92, -0.25, z);
+            registerPart(tailLight, new THREE.Vector3(-1.92, -0.25, z), new THREE.Vector3(-6, 2, z * 3), 0.5);
+        });
+
+        // J. Side Mirrors
+        [-0.85, 0.85].forEach(z => {
+            const mirrorGeo = new THREE.BoxGeometry(0.18, 0.12, 0.2);
+            const mirror = new THREE.Mesh(mirrorGeo, roofMat);
+            const sideSign = z > 0 ? 1 : -1;
+            mirror.position.set(0.4, 0.05, z + (sideSign * 0.05));
+            registerPart(mirror, new THREE.Vector3(0.4, 0.05, z + (sideSign * 0.05)), new THREE.Vector3(0.4, 4, z * 4), 0.6);
+        });
+
+        // --- 4. SCROLL ANIMATION LOGIC ---
+        let scrollProgress = 0;
+        const assemblyPct = document.getElementById('assembly-pct');
+        const hudBar = document.getElementById('hud-bar');
+
+        window.addEventListener('scroll', () => {
+            const totalScroll = document.documentElement.scrollHeight - window.innerHeight;
+            scrollProgress = Math.min(1, Math.max(0, window.scrollY / totalScroll));
+            
+            const pct = Math.round(scrollProgress * 100);
+            assemblyPct.innerText = `${pct}%`;
+            hudBar.style.width = `${pct}%`;
+        });
+
+        function lerp(start, end, amt) {
+            return (1 - amt) * start + amt * end;
+        }
+
+        let currentProgress = 0;
+
+        // --- 5. RENDER LOOP ---
+        function animate() {
+            requestAnimationFrame(animate);
+
+            // Smooth progress transition
+            currentProgress = lerp(currentProgress, scrollProgress, 0.08);
+
+            // Dynamic rotation and hover height based on scroll
+            carGroup.rotation.y = currentProgress * Math.PI * 2 + 0.6;
+            carGroup.rotation.x = Math.sin(currentProgress * Math.PI) * 0.12;
+            carGroup.position.y = Math.sin(Date.now() * 0.002) * 0.06;
+
+            // Assemble parts with staggered delays for enhanced assembly animation effect
+            parts.forEach(part => {
+                const adjustedP = Math.min(1, Math.max(0, (currentProgress - part.delay * 0.3) / (1 - part.delay * 0.3)));
+                
+                part.mesh.position.x = lerp(part.start.x, part.orig.x, adjustedP);
+                part.mesh.position.y = lerp(part.start.y, part.orig.y, adjustedP);
+                part.mesh.position.z = lerp(part.start.z, part.orig.z, adjustedP);
+            });
+
+            renderer.render(scene, camera);
+        }
+
+        animate();
+
+        // --- 6. WINDOW RESIZE HANDLER ---
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            map.invalidateSize();
+        });
+    </script>
+</body>
+</html>
